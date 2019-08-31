@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Singular Key Fido2 Demo</string>
+    <string name="register_fido2">FIDO2 Register</string>
+    <string name="login_fido2">FIDO2 Login</string>
+</resources>
