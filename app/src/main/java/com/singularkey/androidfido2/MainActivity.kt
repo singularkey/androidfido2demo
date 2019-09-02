@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         } catch(e:Exception) {
-            Log.e(LOG_TAG,e.toString())
+            e.printStackTrace()
         }
 
     }
@@ -179,7 +179,7 @@ class MainActivity : AppCompatActivity() {
             .setUser(
                 PublicKeyCredentialUserEntity(
                     userId.toByteArray(),
-                    null,
+                    userId,
                     null,
                     userName
                 )
@@ -213,7 +213,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } catch(e: Exception) {
-            Log.e(LOG_TAG,e.toString())
+            e.printStackTrace()
         }
 
 
@@ -267,7 +267,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         } catch(e:Exception) {
-            Log.e(LOG_TAG, e.toString())
+            e.printStackTrace()
         }
     }
 
@@ -307,7 +307,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         } catch(e:Exception) {
-            Log.e(LOG_TAG,e.toString())
+            e.printStackTrace()
         }
     }
 
@@ -351,7 +351,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } catch(e:Exception) {
-            Log.e(LOG_TAG,e.toString())
+            e.printStackTrace()
         }
     }
 
@@ -403,7 +403,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         } catch(e:Exception) {
-            Log.e(LOG_TAG,e.toString())
+            e.printStackTrace()
         }
     }
 
