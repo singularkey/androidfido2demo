@@ -141,7 +141,18 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                        fido2AndroidRegister(rpname, challenge, userId, username,authenticatorAttachement)
+                        val attestation = intiateResponse?.getString("attestation")
+                        Log.d(LOG_TAG, attestation)
+                        var attestationPreference: AttestationConveyancePreference = AttestationConveyancePreference.NONE
+                        if(attestation == "direct") {
+                            attestationPreference = AttestationConveyancePreference.DIRECT
+                        } else if(attestation == "indirect") {
+                            attestationPreference = AttestationConveyancePreference.INDIRECT
+                        } else if(attestation == "none") {
+                            attestationPreference = AttestationConveyancePreference.NONE
+                        }
+
+                        fido2AndroidRegister(rpname, challenge, userId, username,authenticatorAttachement,attestationPreference)
                     } else {
                         resultText.text = response.toString()
                     }
@@ -170,11 +181,13 @@ class MainActivity : AppCompatActivity() {
         challenge: ByteArray,
         userId: String,
         userName: String?,
-        authenticatorAttachment:String?
+        authenticatorAttachment:String?,
+        attestationPreference:AttestationConveyancePreference
     ) {
 
         try {
             val options = PublicKeyCredentialCreationOptions.Builder()
+            .setAttestationConveyancePreference(attestationPreference)
             .setRp(PublicKeyCredentialRpEntity(RPID, rpname, null))
             .setUser(
                 PublicKeyCredentialUserEntity(
