@@ -1,7 +1,7 @@
 # Singular Key Android FIDO2 Demo
 
 This project demonstrates the registration and use of a FIDO2 credential in an Android App. It uses Android's FIDO2 native API and Singular Key's FIDO2 Cloud Service. FIDO2 Credentials are phishing resistant, attested public key based credentials for strong authentication of users.
-The demo supports Android Platform authenticator using frigerprint/screen lock and BLE,NFC,USB based security Keys (roaming authenticators)
+The demo supports Android Platform authenticator using fingerprint/screen lock and BLE,NFC,USB based security Keys (roaming authenticators)
 
 This demonstration requires Demo RP (Relying Party) Server (https://github.com/singularkey/webauthndemo) which communicates to Singular Key's FIDO2 Cloud Service. Please contact support (`support@singularkey.com`) for your `free Api Key`.
 
