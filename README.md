@@ -1,4 +1,4 @@
-# Singular Key WebAuthn Demo
+# Singular Key Android FIDO2 Demo
 
 This project demonstrates the registration and use of a FIDO2 credential in an Android App. It uses Android's FIDO2 native API and Singular Key's FIDO2 Cloud Service. FIDO2 Credentials are phishing resistant, attested public key based credentials for strong authentication of users.
 The demo supports Android Platform authenticator using frigerprint/screen lock and BLE,NFC,USB based security Keys (roaming authenticators)
@@ -50,8 +50,15 @@ sha256_cert_fingerprints entry in the assetlinks.json file.
 Edit `MainActivity.kt`
 ```Js
 var RP_SERVER_URL = "ADD_YOUR_RP_SERVER_URL_HERE"; //e.g., https://api.singularkey.com
-var RPID = "ADD_YOUR_RPID_HERE"  // e.g., api.yourcompany.com
+var RPID = "ADD_YOUR_RPID_HERE"  // e.g., api.yourcompany.com.  RPID is a valid domain string that identifies the WebAuthn Relying Party on whose behalf a given registration or authentication ceremony is being performed. A public key credential can only be used for authentication with the same entity (as identified by RP ID) it was registered with.
 ```
+
+##### Singular Key FIDO2 Settings  (https://devportal.singularkey.com)
+* There are two main settings for the FIDO2 Section in your client app in the Singular Key Admin Portal. Log into the Admin portal using the credentials provided to you.
+    * `Supported Origin Domain Name`: In case of Android, this will be the apk-key-hash in the format android:apk-key-hash:<YOUR_APK_HASH> (e.g. android:apk-key-hash:xYvjmzazZxLXDNrFnWUq_EObrht2yX2hfmkrehWrJ5Y). One way to find out this value is to attempt to register a FIDO2 credential using the Android Demo app. You'll see a client mismatch error in the RP Server logs with the android origin value.
+    * `Rp Id`: Enable this and update the value with the RPID used in the Android Fido2 App. (in the section above)
+
+Click on `Save` towards the bottom of the Fido2 settings form to persist your changes.
 
 ### Run
 Build your Android App and install it on an android device. Below is a demonstration of the functionality:
