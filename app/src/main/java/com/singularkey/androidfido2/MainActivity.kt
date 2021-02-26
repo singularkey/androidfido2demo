@@ -34,11 +34,11 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-var RP_SERVER_URL = "https://12841968ac5b.ngrok.io";  //e.g., https://api.singularkey.com
-//var RP_SERVER_URL = "https://webauthndemo.singularkey.com";  //e.g., https://api.singularkey.com
+//var RP_SERVER_URL = "https://12841968ac5b.ngrok.io";  //e.g., https://api.singularkey.com
+var RP_SERVER_URL = "https://webauthndemo.singularkey.com";  //e.g., https://api.singularkey.com
 
-var RPID = "12841968ac5b.ngrok.io"                     // e.g., api.yourcompany.com
-//var RPID = "webauthndemo.singularkey.com"                     // e.g., api.yourcompany.com
+//var RPID = "12841968ac5b.ngrok.io"                     // e.g., api.yourcompany.com
+var RPID = "webauthndemo.singularkey.com"                     // e.g., api.yourcompany.com
 
 
 private const val BASE64_FLAG = Base64.NO_PADDING or Base64.NO_WRAP or Base64.URL_SAFE
