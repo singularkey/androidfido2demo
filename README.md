@@ -46,7 +46,7 @@ sha256_cert_fingerprints entry in the assetlinks.json file.
 ```
 
 ##### Android FIDO2 App (This Repository)
-#
+
 Edit `MainActivity.kt`
 ```Js
 var RP_SERVER_URL = "ADD_YOUR_RP_SERVER_URL_HERE"; //e.g., https://api.singularkey.com
