@@ -25,17 +25,20 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.fido.Fido
 import com.google.android.gms.fido.fido2.api.common.*
 import kotlinx.android.synthetic.main.activity_main.*
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import org.json.JSONArray
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import org.json.JSONArray
-import org.json.JSONObject
 
-var RP_SERVER_URL = "ADD_YOUR_RP_SERVER_URL_HERE";  //e.g., https://api.singularkey.com
-var RPID = "ADD_YOUR_RPID_HERE"                     // e.g., api.yourcompany.com
+//var RP_SERVER_URL = "https://12841968ac5b.ngrok.io";  //e.g., https://api.singularkey.com
+var RP_SERVER_URL = "https://webauthndemo.singularkey.com";  //e.g., https://api.singularkey.com
+
+//var RPID = "12841968ac5b.ngrok.io"                     // e.g., api.yourcompany.com
+var RPID = "webauthndemo.singularkey.com"                     // e.g., api.yourcompany.com
 
 
 private const val BASE64_FLAG = Base64.NO_PADDING or Base64.NO_WRAP or Base64.URL_SAFE
@@ -71,14 +74,16 @@ class MainActivity : AppCompatActivity() {
                     if (it.hasExtra(Fido.FIDO2_KEY_ERROR_EXTRA)) {
 
                         val errorExtra = data.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
-                        val authenticatorErrorResponse = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
+                        val authenticatorErrorResponse =
+                            AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
                         val errorName = authenticatorErrorResponse.errorCode.name
                         val errorMessage = authenticatorErrorResponse.errorMessage
 
                         Log.e(LOG_TAG, "errorCode.name: $errorName")
                         Log.e(LOG_TAG, "errorMessage: $errorMessage")
 
-                        resultText.text = "An Error Ocurred\n\nError Name:\n$errorName\n\nError Message:\n$errorMessage"
+                        resultText.text =
+                            "An Error Occurred\n\nError Name:\n$errorName\n\nError Message:\n$errorMessage"
 
                     } else if (it.hasExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA)) {
                         val fido2Response = data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA)
@@ -109,62 +114,83 @@ class MainActivity : AppCompatActivity() {
     private fun fido2RegisterInitiate() {
 
         val result = JSONObject()
-        val mediaType = MediaType.parse("application/json")
+        val mediaType = "application/json".toMediaTypeOrNull()
 
-        result.put("name", usernameButton.text.toString())
+        result.put("username", usernameButton.text.toString())
 
         //Optional
         val jsonObject = JSONObject()
         //jsonObject.put("authenticatorAttachment","platform")
-        jsonObject.put("userVerification","required")
-        result.put("authenticatorSelection",jsonObject)
+        jsonObject.put("userVerification", "required")
+        result.put("authenticatorSelection", jsonObject)
 
         val requestBody = RequestBody.create(mediaType, result.toString())
 
         try {
-            RPApiService.getApi().registerInitiate(requestBody).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if (response.isSuccessful) {
-                        var obj = JSONObject(response.body()?.string())
-                        var intiateResponse = obj.getJSONObject("initiateRegistrationResponse")
-                        val c = intiateResponse?.getString("challenge")
-                        val challenge = Base64.decode(c!!, BASE64_FLAG)
-                        var rpname = intiateResponse?.getJSONObject("rp")!!.getString("name")
-                        var username = intiateResponse?.getJSONObject("user")!!.getString("name")
-                        var userId = intiateResponse?.getJSONObject("user")!!.getString("id")
+            RPApiService.getApi().registerInitiate(requestBody)
+                .enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
 
-                        var authenticatorAttachement = ""
-                        if(intiateResponse.has("authenticatorSelection")){
-                            if(intiateResponse?.getJSONObject("authenticatorSelection").has("authenticatorAttachment")) {
-                                authenticatorAttachement = intiateResponse?.getJSONObject("authenticatorSelection")?.getString("authenticatorAttachment")!!
-                                Log.d(LOG_TAG, "authenticatorAttachement $authenticatorAttachement")
+                            var obj = JSONObject(response.body()?.string())
+                            var intiateResponse = obj.getJSONObject("initiateRegistrationResponse")
+                            val c = intiateResponse?.getString("challenge")
+                            val challenge = Base64.decode(c!!, BASE64_FLAG)
+                            var rpname = intiateResponse?.getJSONObject("rp")!!.getString("name")
+                            var username =
+                                intiateResponse?.getJSONObject("user")!!.getString("name")
+                            var userId = intiateResponse?.getJSONObject("user")!!.getString("id")
+
+                            var authenticatorAttachement = ""
+                            if (intiateResponse.has("authenticatorSelection")) {
+                                if (intiateResponse?.getJSONObject("authenticatorSelection")
+                                        .has("authenticatorAttachment")
+                                ) {
+                                    authenticatorAttachement =
+                                        intiateResponse?.getJSONObject("authenticatorSelection")
+                                            ?.getString("authenticatorAttachment")!!
+                                    Log.d(
+                                        LOG_TAG,
+                                        "authenticatorAttachement $authenticatorAttachement"
+                                    )
+                                }
                             }
+
+                            val attestation = intiateResponse?.getString("attestation")
+                            Log.d(LOG_TAG, attestation)
+                            var attestationPreference: AttestationConveyancePreference =
+                                AttestationConveyancePreference.NONE
+                            if (attestation == "direct") {
+                                attestationPreference = AttestationConveyancePreference.DIRECT
+                            } else if (attestation == "indirect") {
+                                attestationPreference = AttestationConveyancePreference.INDIRECT
+                            } else if (attestation == "none") {
+                                attestationPreference = AttestationConveyancePreference.NONE
+                            }
+
+                            fido2AndroidRegister(
+                                rpname,
+                                challenge,
+                                userId,
+                                username,
+                                authenticatorAttachement,
+                                attestationPreference
+                            )
+                        } else {
+                            resultText.text = response.toString()
                         }
 
-                        val attestation = intiateResponse?.getString("attestation")
-                        Log.d(LOG_TAG, attestation)
-                        var attestationPreference: AttestationConveyancePreference = AttestationConveyancePreference.NONE
-                        if(attestation == "direct") {
-                            attestationPreference = AttestationConveyancePreference.DIRECT
-                        } else if(attestation == "indirect") {
-                            attestationPreference = AttestationConveyancePreference.INDIRECT
-                        } else if(attestation == "none") {
-                            attestationPreference = AttestationConveyancePreference.NONE
-                        }
-
-                        fido2AndroidRegister(rpname, challenge, userId, username,authenticatorAttachement,attestationPreference)
-                    } else {
-                        resultText.text = response.toString()
                     }
 
-                }
-
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    Log.d(LOG_TAG, t.message)
-                    resultText.text = t.message
-                }
-            })
-        } catch(e:Exception) {
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        Log.d(LOG_TAG, t.message)
+                        resultText.text = t.message
+                    }
+                })
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 
@@ -181,33 +207,33 @@ class MainActivity : AppCompatActivity() {
         challenge: ByteArray,
         userId: String,
         userName: String?,
-        authenticatorAttachment:String?,
-        attestationPreference:AttestationConveyancePreference
+        authenticatorAttachment: String?,
+        attestationPreference: AttestationConveyancePreference
     ) {
 
         try {
             val options = PublicKeyCredentialCreationOptions.Builder()
-            .setAttestationConveyancePreference(attestationPreference)
-            .setRp(PublicKeyCredentialRpEntity(RPID, rpname, null))
-            .setUser(
-                PublicKeyCredentialUserEntity(
-                    userId.toByteArray(),
-                    userId,
-                    null,
-                    userName
-                )
-            )
-            .setChallenge(challenge)
-            .setParameters(
-                listOf(
-                    PublicKeyCredentialParameters(
-                        PublicKeyCredentialType.PUBLIC_KEY.toString(),
-                        EC2Algorithm.ES256.algoValue
+                .setAttestationConveyancePreference(attestationPreference)
+                .setRp(PublicKeyCredentialRpEntity(RPID, rpname, null))
+                .setUser(
+                    PublicKeyCredentialUserEntity(
+                        userId.toByteArray(),
+                        userId,
+                        null,
+                        userName
                     )
                 )
-            )
+                .setChallenge(challenge)
+                .setParameters(
+                    listOf(
+                        PublicKeyCredentialParameters(
+                            PublicKeyCredentialType.PUBLIC_KEY.toString(),
+                            EC2Algorithm.ES256.algoValue
+                        )
+                    )
+                )
 
-            if(authenticatorAttachment != "") {
+            if (authenticatorAttachment != "") {
                 val builder = AuthenticatorSelectionCriteria.Builder()
                 builder.setAttachment(Attachment.fromString("platform"))
                 options.setAuthenticatorSelection(builder.build())
@@ -219,19 +245,21 @@ class MainActivity : AppCompatActivity() {
                 if (fido2PendingIntent.hasPendingIntent()) {
                     try {
                         Log.d(LOG_TAG, "launching Fido2 Pending Intent")
-                        fido2PendingIntent.launchPendingIntent(this@MainActivity, REQUEST_CODE_REGISTER)
+                        fido2PendingIntent.launchPendingIntent(
+                            this@MainActivity,
+                            REQUEST_CODE_REGISTER
+                        )
                     } catch (e: IntentSender.SendIntentException) {
                         e.printStackTrace()
                     }
                 }
             }
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 
 
-}
-
+    }
 
 
     //**********************************************************************************************************//
@@ -239,11 +267,12 @@ class MainActivity : AppCompatActivity() {
     //***************************** Send Signed Challenge (Attestation) to the Server for validation ***********//
     //**********************************************************************************************************//
     private fun fido2RegisterComplete(fido2Response: ByteArray) {
-        val attestationResponse = AuthenticatorAttestationResponse.deserializeFromBytes(fido2Response)
+        val attestationResponse =
+            AuthenticatorAttestationResponse.deserializeFromBytes(fido2Response)
         val credId = Base64.encodeToString(attestationResponse.keyHandle, BASE64_FLAG)
         val clientDataJson = Base64.encodeToString(attestationResponse.clientDataJSON, BASE64_FLAG)
-        val attestationObjectBase64 = Base64.encodeToString(attestationResponse.attestationObject, Base64.DEFAULT)
-
+        val attestationObjectBase64 =
+            Base64.encodeToString(attestationResponse.attestationObject, Base64.DEFAULT)
 
         val webAuthnResponse = JSONObject()
         val response = JSONObject()
@@ -258,28 +287,34 @@ class MainActivity : AppCompatActivity() {
         webAuthnResponse.put("getClientExtensionResults", JSONObject())
         webAuthnResponse.put("response", response)
 
-        val mediaType = MediaType.parse("application/json")
+        val mediaType = "application/json".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, webAuthnResponse.toString())
 
         try {
-            RPApiService.getApi().registerComplete("name=${usernameButton.text.toString()}",requestBody).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if (response.isSuccessful) {
-                        resultText.text = "Registration Successful"
-                        Log.d("response", response.message())
-                    } else {
-                        resultText.text = "Registration Failed" + "\n" + response.toString()
-                        Log.d("response", response.errorBody().toString())
+            RPApiService.getApi()
+                .registerComplete("username=${usernameButton.text.toString()}", requestBody)
+                //.registerComplete( requestBody)
+                .enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
+                            resultText.text = "Registration Successful"
+                            Log.d("response", response.message())
+                        } else {
+                            resultText.text = "Registration Failed" + "\n" + response.toString()
+                            Log.d("response", response.errorBody().toString())
+                        }
+
                     }
 
-                }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        Log.d("response", t.message)
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    Log.d("response", t.message)
-
-                }
-            })
-        } catch(e:Exception) {
+                    }
+                })
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -292,34 +327,38 @@ class MainActivity : AppCompatActivity() {
     private fun fido2AuthInitiate() {
 
         val result = JSONObject()
-        val mediaType = MediaType.parse("application/json")
-        result.put("name", usernameButton.text.toString())
+        val mediaType = "application/json".toMediaTypeOrNull()
+        result.put("username", usernameButton.text.toString())
         val requestBody = RequestBody.create(mediaType, result.toString())
         try {
-            RPApiService.getApi().authInitiate(requestBody).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if (response.isSuccessful) {
-                        val obj = JSONObject(response.body()?.string())
-                        val c = obj?.getString("challenge")
-                        val challenge = Base64.decode(c!!, BASE64_FLAG)
-                        val allowCredentials = obj?.getJSONArray("allowCredentials")
+            RPApiService.getApi().authInitiate(requestBody)
+                .enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
+                            val obj = JSONObject(response.body()?.string())
+                            val c = obj?.getString("challenge")
+                            val challenge = Base64.decode(c!!, BASE64_FLAG)
+                            val allowCredentials = obj?.getJSONArray("allowCredentials")
 
-                        fido2AndroidAuth(allowCredentials, challenge)
+                            fido2AndroidAuth(allowCredentials, challenge)
 
-                        Log.d("response", response.message())
-                    } else {
-                        Log.d("response", response.errorBody().toString())
-                        resultText.text = "Authentication Failed" + "\n" + response.toString()
+                            Log.d("response", response.message())
+                        } else {
+                            Log.d("response", response.errorBody().toString())
+                            resultText.text = "Authentication Failed" + "\n" + response.toString()
+                        }
+
                     }
 
-                }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        Log.d("response", t.message)
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    Log.d("response", t.message)
-
-                }
-            })
-        } catch(e:Exception) {
+                    }
+                })
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -363,7 +402,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        } catch(e:Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -377,7 +416,8 @@ class MainActivity : AppCompatActivity() {
         val assertionResponse = AuthenticatorAssertionResponse.deserializeFromBytes(fido2Response)
         val credId = Base64.encodeToString(assertionResponse.keyHandle, BASE64_FLAG)
         val signature = Base64.encodeToString(assertionResponse.signature, BASE64_FLAG)
-        val authenticatorData = Base64.encodeToString(assertionResponse.authenticatorData, BASE64_FLAG)
+        val authenticatorData =
+            Base64.encodeToString(assertionResponse.authenticatorData, BASE64_FLAG)
         val clientDataJson = Base64.encodeToString(assertionResponse.clientDataJSON, BASE64_FLAG)
 
 
@@ -394,28 +434,33 @@ class MainActivity : AppCompatActivity() {
         jsonObject.put("getClientExtensionResults", JSONObject())
         jsonObject.put("response", response)
 
-        val mediaType = MediaType.parse("application/json")
+        val mediaType = "application/json".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, jsonObject.toString())
 
         try {
-            RPApiService.getApi().authComplete("name=${usernameButton.text.toString()}",requestBody).enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if (response.isSuccessful) {
-                        resultText.text = "Authentication Successful"
-                        Log.d("response", response.message())
-                    } else {
-                        Log.d("response", response.errorBody().toString())
-                        resultText.text = "Authentication Failed" + "\n" + response.toString()
+            RPApiService.getApi()
+                .authComplete("username=${usernameButton.text.toString()}", requestBody)
+                .enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
+                            resultText.text = "Authentication Successful"
+                            Log.d("response", response.message())
+                        } else {
+                            Log.d("response", response.errorBody().toString())
+                            resultText.text = "Authentication Failed" + "\n" + response.toString()
+                        }
+
                     }
 
-                }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        Log.d("response", t.message)
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    Log.d("response", t.message)
-
-                }
-            })
-        } catch(e:Exception) {
+                    }
+                })
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
