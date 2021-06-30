@@ -16,6 +16,7 @@
 
 package com.singularkey.androidfido2
 
+import android.content.Context
 import okhttp3.JavaNetCookieJar
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
@@ -62,7 +63,7 @@ class RPApiService {
     companion object {
         var cookieManager: CookieManager? = null
 
-        fun getApi(): RPApi {
+        fun getApi(context: Context): RPApi {
 
             val interceptor = HttpLoggingInterceptor()
             interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
@@ -71,8 +72,11 @@ class RPApiService {
                 cookieManager!!.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
             }
 
-            val okHttpClientBuilder = OkHttpClient().newBuilder() //create OKHTTPClient
+            var okHttpClientBuilder = OkHttpClient().newBuilder() //create OKHTTPClient
             okHttpClientBuilder.cookieJar(JavaNetCookieJar(cookieManager!!))
+            okHttpClientBuilder.addInterceptor(ReceivedCookiesInterceptor(context))
+            okHttpClientBuilder.addInterceptor(AddCookiesInterceptor(context))
+
 
             val okHttpClient = okHttpClientBuilder
                 .connectTimeout(120, TimeUnit.SECONDS)

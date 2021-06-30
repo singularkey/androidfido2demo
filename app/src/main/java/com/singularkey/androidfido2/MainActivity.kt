@@ -19,6 +19,7 @@ package com.singularkey.androidfido2
 import android.content.Intent
 import android.content.IntentSender
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.util.Base64
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -127,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         val requestBody = RequestBody.create(mediaType, result.toString())
 
         try {
-            RPApiService.getApi().registerInitiate(requestBody)
+            RPApiService.getApi(this).registerInitiate(requestBody)
                 .enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(
                         call: Call<ResponseBody>,
@@ -291,7 +292,7 @@ class MainActivity : AppCompatActivity() {
         val requestBody = RequestBody.create(mediaType, webAuthnResponse.toString())
 
         try {
-            RPApiService.getApi()
+            RPApiService.getApi(this)
                 .registerComplete("username=${usernameButton.text.toString()}", requestBody)
                 //.registerComplete( requestBody)
                 .enqueue(object : Callback<ResponseBody> {
@@ -331,7 +332,7 @@ class MainActivity : AppCompatActivity() {
         result.put("username", usernameButton.text.toString())
         val requestBody = RequestBody.create(mediaType, result.toString())
         try {
-            RPApiService.getApi().authInitiate(requestBody)
+            RPApiService.getApi(this).authInitiate(requestBody)
                 .enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(
                         call: Call<ResponseBody>,
@@ -438,7 +439,7 @@ class MainActivity : AppCompatActivity() {
         val requestBody = RequestBody.create(mediaType, jsonObject.toString())
 
         try {
-            RPApiService.getApi()
+            RPApiService.getApi(this)
                 .authComplete("username=${usernameButton.text.toString()}", requestBody)
                 .enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(
@@ -446,6 +447,11 @@ class MainActivity : AppCompatActivity() {
                         response: Response<ResponseBody>
                     ) {
                         if (response.isSuccessful) {
+                            val memes =
+                                PreferenceManager.getDefaultSharedPreferences(this@MainActivity)
+                                    .edit()
+                            memes.putStringSet("PREF_COOKIES", HashSet<String>()).apply()
+                            memes.commit()
                             resultText.text = "Authentication Successful"
                             Log.d("response", response.message())
                         } else {

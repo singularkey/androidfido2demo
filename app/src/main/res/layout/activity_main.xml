@@ -9,9 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="top"
-
-        >
+        android:gravity="top">
 
         <ImageView
             android:id="@+id/imageView2"
@@ -19,8 +17,7 @@
             android:layout_height="51dp"
             android:layout_marginTop="80px"
             app:srcCompat="@drawable/sklogo"
-            android:layout_gravity="center"
-            />
+            android:layout_gravity="center"/>
 
     </LinearLayout>
 
@@ -30,8 +27,7 @@
         android:orientation="vertical"
         android:gravity="center"
         tools:layout_editor_absoluteX="199dp"
-        tools:layout_editor_absoluteY="252dp"
-        >
+        tools:layout_editor_absoluteY="252dp">
 
         <EditText
             android:id="@+id/usernameButton"
@@ -40,16 +36,14 @@
             android:ems="10"
             android:inputType="textPersonName"
             android:hint="Username"
-            android:backgroundTint="@android:color/holo_orange_dark"
-            />
+            android:backgroundTint="@android:color/holo_orange_dark" />
 
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center"
-            >
+            android:gravity="center">
 
             <Button
                 android:id="@+id/registerFido2Button"
@@ -82,8 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:textAlignment="center"
-                tools:text="An Error Occurred\n\nError Name:\ Error Name\n\nError Message:\ Error Message"
-                />
+                tools:text="An Error Occurred\n\nError Name:\ Error Name\n\nError Message:\ Error Message" />
 
 
     </LinearLayout>
